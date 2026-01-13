@@ -85,17 +85,63 @@ const categoryModal = document.getElementById('category-modal');
 const newCategoryInput = document.getElementById('new-category-name');
 const confirmCatBtn = document.getElementById('confirm-cat-btn');
 const cancelCatBtn = document.getElementById('cancel-cat-btn');
+const userCategoryList = document.getElementById('user-category-list');
+const userCategoriesSection = document.getElementById('user-categories-section');
 
 // Open Modal
 function openModal() {
   categoryModal.classList.add('show');
   newCategoryInput.focus();
+  renderUserCategories();
 }
 
 // Close Modal
 function closeModal() {
   categoryModal.classList.remove('show');
   newCategoryInput.value = '';
+}
+
+function renderUserCategories() {
+  const userCats = categories.filter(c => c.user_id !== null);
+
+  if (userCats.length > 0) {
+    userCategoriesSection.style.display = 'block';
+    userCategoryList.innerHTML = '';
+
+    userCats.forEach(cat => {
+      const li = document.createElement('li');
+      li.innerHTML = `
+        <span style="color: ${cat.color}">●</span> ${cat.name} 
+        <small style="opacity: 0.6; font-size: 0.7rem;">(${cat.type})</small>
+        <button class="delete-btn" onclick="removeCategory(${cat.id}, '${cat.name}')">x</button>
+      `;
+      userCategoryList.appendChild(li);
+    });
+  } else {
+    userCategoriesSection.style.display = 'none';
+  }
+}
+
+async function removeCategory(id, name) {
+  showConfirm('Delete Category?', `Are you sure you want to delete "${name}"? Transactions using this category will remain, but the category label will be unstyled.`, async () => {
+    try {
+      const res = await fetch(`/api/categories/${id}`, {
+        method: 'DELETE'
+      });
+
+      if (res.ok) {
+        categories = categories.filter(c => c.id !== id);
+        populateCategorySelect();
+        renderUserCategories();
+        updateUI(); // In case some categories in view changed
+      } else {
+        const error = await res.json();
+        alert(error);
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  });
 }
 
 // Add Category logic
