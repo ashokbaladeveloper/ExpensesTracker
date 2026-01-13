@@ -174,6 +174,21 @@ app.post('/api/categories', ensureAuthenticated, async (req, res) => {
     }
 });
 
+app.delete('/api/categories/:id', ensureAuthenticated, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const delOp = await pool.query('DELETE FROM categories WHERE id = $1 AND user_id = $2', [id, req.user.id]);
+
+        if (delOp.rowCount === 0) {
+            return res.status(404).json('Category not found or not authorized to delete system categories');
+        }
+        res.json('Category was deleted!');
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Server Error');
+    }
+});
+
 
 const PORT = process.env.PORT || 5000;
 
