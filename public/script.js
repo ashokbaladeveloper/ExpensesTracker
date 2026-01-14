@@ -11,6 +11,7 @@ const monthFilter = document.getElementById('month-filter');
 const clearBtn = document.getElementById('clear-btn');
 const addCategoryBtn = document.getElementById('add-category-btn');
 const submitBtn = form.querySelector('.btn');
+const notificationContainer = document.getElementById('notification-container');
 
 let transactions = [];
 let categories = [];
@@ -144,6 +145,34 @@ async function removeCategory(id, name) {
   });
 }
 
+function showNotification(message, type = 'error') {
+  const notification = document.createElement('div');
+  notification.classList.add('notification');
+  if (type) notification.classList.add(type);
+
+  notification.innerHTML = `
+    <span>${message}</span>
+  `;
+
+  notificationContainer.appendChild(notification);
+
+  // Auto remove after 3 seconds
+  setTimeout(() => {
+    notification.style.opacity = '0';
+    notification.style.transform = 'translateY(-20px)';
+    notification.style.transition = 'all 0.4s ease';
+    setTimeout(() => notification.remove(), 400);
+  }, 3000);
+}
+
+function removeErrorHighlight(e) {
+  e.target.classList.remove('error-highlight');
+}
+
+[text, amount, dateInput].forEach(input => {
+  input.addEventListener('input', removeErrorHighlight);
+});
+
 // Add Category logic
 async function addNewCategory() {
   const name = newCategoryInput.value;
@@ -231,8 +260,16 @@ document.addEventListener('keydown', (e) => {
 async function addTransaction(e) {
   e.preventDefault();
 
-  if (text.value.trim() === '' || amount.value.trim() === '' || dateInput.value === '') {
-    alert('Please add a text, amount, and date');
+  const isTextEmpty = text.value.trim() === '';
+  const isAmountEmpty = amount.value.trim() === '';
+  const isDateEmpty = dateInput.value === '';
+
+  if (isTextEmpty || isAmountEmpty || isDateEmpty) {
+    if (isTextEmpty) text.classList.add('error-highlight');
+    if (isAmountEmpty) amount.classList.add('error-highlight');
+    if (isDateEmpty) dateInput.classList.add('error-highlight');
+
+    showNotification('Please add a text, amount, and date', 'error');
   } else {
     if (isEditing) {
       await updateTransaction();
